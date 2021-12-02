@@ -1,4 +1,72 @@
 import random
+import getpass
+import json
+
+
+class Create_Account:
+    def __init__(self) -> None:
+        self.username = None
+        self.first_name = None
+        self.last_name = None
+        self.phone_number = None
+        self.password = None
+        self.encr_password = None
+        self.encr_table = {
+            'a': '100', 'b': '2', 'c': '%', 'd': '8', 'f': '(hj(','g': '?',
+            'h': '!', 'i': '}q', 'j': 'kjw', 'l': 'A', 'm': 'C', 'o': 'r',
+            'p': '3oes', 'q': 'baba', 'r': '%h0', 's': 'OOO0', 't': 'g',
+            'v': '567%&', 'w': 'u', 'x' : 'yZ', 'y': '123', 'z': 'tt',
+            'A': 'hej', 'B': 'JJ', 'C': 'oc', 'D': 'IUP', 'E': 'bengt',
+            'F': '4', 'G': '55', 'H': 'ol', 'I': '{[', 'J': 'j', 'K': 'Abow',
+            'L': '2', 'M': '6k', 'N': 'knasigt', 'O': 'aA', 'P': 'Q', 
+            'Q': 'hosd', 'R': 'TGys', 'S': 'PsB', 'T': ']ed', 'U': '63789', 
+            'V': 'Hs', 'W': 'MyrsjoesTornado', 'X': 'yT', 'Y': 'aesel', 'Z': 'gris',
+            '1': '84', '2': '23', '3': 'syv', '4': 'aAs', '5': 'kS', '6': 'UGe',
+            '7': 'VjQ', '8': '32gh', '9': ' ', '0': 'Dble' 
+        }
+        
+    
+    def create_account(self) -> None:
+        print("\nCreate new account\nMake sure to check that what has been typed is correct before proceeding!\n")
+        self.username = input("Username: ")
+        self.first_name = input("First Name: ")
+        self.last_name = input("Last Name: ")
+        self.phone_number = input("Phone Number: ")
+        self.new_account_password()
+        self.encr_password = ""
+        for letter in self.password:
+            if letter in self.encr_table:
+                self.encr_password += self.encr_table[letter]
+            else:
+                self.encr_password += letter
+        new_account = {
+            'username': f'{self.username}',
+            'first_name': f'{self.first_name}',
+            'last_name': f'{self.last_name}',
+            'phone-number': f'{self.phone_number}',
+            'password': f'{self.encr_password}'
+            }
+
+        with open ("game.json", "r") as open_file:
+            data = json.load(open_file)
+            open_file.close()
+
+        data['accounts'].append(new_account)
+
+        write_file = open("game.json", "w+")
+        write_file.write(json.dumps(data, indent = 4, sort_keys = True))
+        write_file.close()
+
+
+    def new_account_password(self):
+        password = getpass.getpass("Password: ")
+        confirm_pass = getpass.getpass("Confirm Password: ")
+        if password == confirm_pass:
+            self.password = password
+        else:
+            print("\nPasswords don't match")
+            self.new_account_password()
+
 
 
 class Game:
@@ -6,6 +74,7 @@ class Game:
         self.player = None
         self.dealer = None
         self.card = None
+
 
     def play(self) -> None:
         self.player = Player()
@@ -20,9 +89,21 @@ class Game:
                 self.player.choice()
                 break
     
-    def menu(self):
+
+    def menu(self) -> None:
         print("\nWelcome To BLACKJACK TERMINAL!\n")
-        
+        login_create = input("Login to existing account or create new account? [L/C]")
+        if login_create.lower() == "l":
+            pass
+        elif login_create.lower() == "c":
+            new_account = Create_Account()
+            new_account.create_account()
+
+    
+
+
+    def login(self) -> None:
+        pass
 
 
     def buy_in(self) -> None:
@@ -88,6 +169,11 @@ class Player:
         self.action = ""
         self.stayed = False
         self.balance = None
+        self.username = None
+        self.first_name = None
+        self.last_name = None
+        self.phone_number = None
+        self.password = None
 
     def draw_card(self) -> None:
         self.new_card = Card()
