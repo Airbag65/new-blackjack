@@ -1,11 +1,11 @@
 import random
 
+
 class Game:
     def __init__(self) -> None:
         self.player = None
         self.dealer = None
         self.card = None
-        self.play()
 
     def play(self) -> None:
         self.player = Player()
@@ -20,6 +20,11 @@ class Game:
                 self.player.choice()
                 break
     
+    def menu(self):
+        print("\nWelcome To BLACKJACK TERMINAL!\n")
+        
+
+
     def buy_in(self) -> None:
         requested_balance = float(input("Enter your wanted buy-in amount: "))
         confirm_buy_in = input(f"You want to pay €{requested_balance} as buy-in? [Y/N] ")
@@ -96,7 +101,7 @@ class Player:
             if self.action.lower() == "h":
                 self.draw_card()
                 self.choice()
-                print(f"Your total is {self.total}")
+                print(f"Your total is now {self.total}")
             elif self.action.lower() == "s":
                 self.stayed = True
             else:
@@ -109,3 +114,4 @@ class Player:
         
 if __name__ == "__main__":
     new_game = Game()
+    new_game.menu()
