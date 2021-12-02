@@ -1,11 +1,7 @@
 import random
 
-import Dealer
-import Player
-
 class Game:
     def __init__(self) -> None:
-        self.player_balance = None
         self.player = None
         self.dealer = None
         self.card = None
@@ -13,7 +9,29 @@ class Game:
 
     def play(self) -> None:
         self.player = Player()
-        self.player.draw_card()
+        if self.player.balance == None:
+            self.buy_in()
+            print("\n")
+        for i in range(2):
+            self.player.draw_card() 
+        while(self.player.total < 21):
+            print(f"Your total is {self.player.total}")
+            if self.player.stayed == False:
+                self.player.choice()
+                break
+    
+    def buy_in(self) -> None:
+        requested_balance = float(input("Enter your wanted buy-in amount: "))
+        confirm_buy_in = input(f"You want to pay €{requested_balance} as buy-in? [Y/N] ")
+        if confirm_buy_in.lower() == "y":
+            self.player.balance = requested_balance
+            print(f"\nYour balance is €{self.player.balance}")
+        elif confirm_buy_in.lower() == "n":
+            print(f"You denied the amount €{requested_balance}")
+            self.buy_in()
+        else:
+            print(f"You did neither confirm nor deny the amount €{requested_balance}\n")
+            self.buy_in()
 
        
 
@@ -44,7 +62,7 @@ class Card:
             13: "King"
             }
     
-    def generate_card(self):
+    def generate_card(self) -> None:
         gen_type = random.randint(1,4)
         gen_face_value = random.randint(1,13)
         self.type = self.possible_types[gen_type]
@@ -59,17 +77,35 @@ class Card:
 
 
 class Player:
-    def __init__(self):
+    def __init__(self) -> None:
         self.hand = []
         self.total = 0
+        self.action = ""
+        self.stayed = False
+        self.balance = None
 
-    def draw_card(self):
+    def draw_card(self) -> None:
         self.new_card = Card()
         self.new_card.generate_card()
         self.hand.append(self.new_card)
         self.total += self.new_card.value
 
+    def choice(self) -> None:
+        self.action = input("Would you like to HIT or STAY? [H/S]")
+        if self.total < 21:
+            if self.action.lower() == "h":
+                self.draw_card()
+                self.choice()
+                print(f"Your total is {self.total}")
+            elif self.action.lower() == "s":
+                self.stayed = True
+            else:
+                print("Neither HIT nor STAY was chosen!\nTry again!\n")
+                self.choice()
+        else:
+            print(f"Your total is {self.total}")
+
+
         
-
-new_game = Game()
-
+if __name__ == "__main__":
+    new_game = Game()
