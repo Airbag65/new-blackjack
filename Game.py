@@ -1,6 +1,10 @@
 import random
 import getpass
+import pwinput
 import json
+import encr_table
+import os
+import time
 
 
 class Create_Account:
@@ -11,23 +15,12 @@ class Create_Account:
         self.phone_number = None
         self.password = None
         self.encr_password = None
-        self.encr_table = {
-            'a': '100', 'b': '2', 'c': '%', 'd': '8', 'f': '(hj(','g': '?',
-            'h': '!', 'i': '}q', 'j': 'kjw', 'l': 'A', 'm': 'C', 'o': 'r',
-            'p': '3oes', 'q': 'baba', 'r': '%h0', 's': 'OOO0', 't': 'g',
-            'v': '567%&', 'w': 'u', 'x' : 'yZ', 'y': '123', 'z': 'tt',
-            'A': 'hej', 'B': 'JJ', 'C': 'oc', 'D': 'IUP', 'E': 'bengt',
-            'F': '4', 'G': '55', 'H': 'ol', 'I': '{[', 'J': 'j', 'K': 'Abow',
-            'L': '2', 'M': '6k', 'N': 'knasigt', 'O': 'aA', 'P': 'Q', 
-            'Q': 'hosd', 'R': 'TGys', 'S': 'PsB', 'T': ']ed', 'U': '63789', 
-            'V': 'Hs', 'W': 'MyrsjoesTornado', 'X': 'yT', 'Y': 'aesel', 'Z': 'gris',
-            '1': '84', '2': '23', '3': 'syv', '4': 'aAs', '5': 'kS', '6': 'UGe',
-            '7': 'VjQ', '8': '32gh', '9': ' ', '0': 'Dble' 
-        }
+        self.encr_table = encr_table.table()
         
     
     def create_account(self) -> None:
-        print("\nCreate new account\nMake sure to check that what has been typed is correct before proceeding!\n")
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print("Create new account\nMake sure to check that what has been typed is correct before proceeding!\n")
         self.username = input("Username: ")
         self.first_name = input("First Name: ")
         self.last_name = input("Last Name: ")
@@ -43,8 +36,9 @@ class Create_Account:
             'username': f'{self.username}',
             'first_name': f'{self.first_name}',
             'last_name': f'{self.last_name}',
-            'phone-number': f'{self.phone_number}',
-            'password': f'{self.encr_password}'
+            'phone_number': f'{self.phone_number}',
+            'password': f'{self.encr_password}',
+            'balance': 0
             }
 
         with open ("game.json", "r") as open_file:
@@ -59,8 +53,9 @@ class Create_Account:
 
 
     def new_account_password(self):
-        password = getpass.getpass("Password: ")
-        confirm_pass = getpass.getpass("Confirm Password: ")
+        password = pwinput.pwinput()
+        print("Confirm password: ")
+        confirm_pass = pwinput.pwinput()
         if password == confirm_pass:
             self.password = password
         else:
@@ -76,8 +71,72 @@ class Game:
         self.card = None
 
 
-    def play(self) -> None:
+    def boot_game(self) -> None:
+        self.start_page()
+
+
+    def start_page(self) -> None:
+            os.system('cls' if os.name == 'nt' else 'clear')
+            print("\n\nWelcome To BLACKJACK TERMINAL!\n\n")
+            login_create = input("Login to existing account or create new account? [L/C]")
+            if login_create.lower() == "l":
+                self.login()
+            elif login_create.lower() == "c":
+                new_account = Create_Account()
+                new_account.create_account()
+                self.start_page()
+
+
+    def login(self) -> None:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print("Login to existing account!\n")
         self.player = Player()
+        with open ("game.json", "r") as open_file:
+            data = json.load(open_file)
+            open_file.close()
+        entered_username = input("Username: ")
+        for account in data['accounts']:
+            if entered_username == account['username']:
+                print(f"\nAccount with username: {entered_username} found!\n")
+                self.player.username = entered_username
+                self.player.password = account['password']
+                self.player.first_name = account['first_name']
+                self.player.last_name = account['last_name']
+                self.player.phone_number = account['phone_number']
+                break
+            else:
+                continue
+        if self.player.username != entered_username:
+            print(f"Account with username: {entered_username} not found!")
+            time.sleep(.5)
+            self.login()
+        else:
+            entered_password = pwinput.pwinput()
+            entered_password = self.decode(entered_password)
+        if entered_password != self.player.password:
+            print("\nLogin attempt failed: WRONG PASSWORD")
+            time.sleep(1)
+            self.login()
+        else:
+            print("Login Successful!")
+            self.player.logged_in = True
+            print(self.player.logged_in)
+            
+
+    def decode(self, password) -> str:
+        temp_pass = ""
+        for letter in password:
+            if letter in encr_table.table():
+                temp_pass += encr_table.table()[letter]
+            else:
+                temp_pass += letter
+        password = temp_pass
+        return password
+
+
+
+
+    def play(self) -> None:
         if self.player.balance == None:
             self.buy_in()
             print("\n")
@@ -89,22 +148,6 @@ class Game:
                 self.player.choice()
                 break
     
-
-    def menu(self) -> None:
-        print("\nWelcome To BLACKJACK TERMINAL!\n")
-        login_create = input("Login to existing account or create new account? [L/C]")
-        if login_create.lower() == "l":
-            pass
-        elif login_create.lower() == "c":
-            new_account = Create_Account()
-            new_account.create_account()
-
-    
-
-
-    def login(self) -> None:
-        pass
-
 
     def buy_in(self) -> None:
         requested_balance = float(input("Enter your wanted buy-in amount: "))
@@ -174,12 +217,15 @@ class Player:
         self.last_name = None
         self.phone_number = None
         self.password = None
+        self.logged_in = False
+
 
     def draw_card(self) -> None:
         self.new_card = Card()
         self.new_card.generate_card()
         self.hand.append(self.new_card)
         self.total += self.new_card.value
+
 
     def choice(self) -> None:
         self.action = input("Would you like to HIT or STAY? [H/S]")
@@ -200,4 +246,4 @@ class Player:
         
 if __name__ == "__main__":
     new_game = Game()
-    new_game.menu()
+    new_game.boot_game()

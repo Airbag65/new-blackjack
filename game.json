@@ -1,5 +1,11 @@
 {
     "accounts": [
-        
+        {
+            "first_name": "Anton",
+            "last_name": "Norman",
+            "password": "!ekjw",
+            "phone_number": "0732610971",
+            "username": "Airbag65"
+        }
     ]
 }
