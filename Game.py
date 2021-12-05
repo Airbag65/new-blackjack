@@ -1,9 +1,9 @@
 import random
-import getpass
 import pwinput
 import json
 import encr_table
 import os
+import sys
 import time
 
 
@@ -44,12 +44,12 @@ class Create_Account:
         with open ("game.json", "r") as open_file:
             data = json.load(open_file)
             open_file.close()
-
         data['accounts'].append(new_account)
-
         write_file = open("game.json", "w+")
         write_file.write(json.dumps(data, indent = 4, sort_keys = True))
         write_file.close()
+        print(f"\n{self.first_name} {self.last_name} was added!")
+        time.sleep(1)
 
 
     def new_account_password(self):
@@ -78,10 +78,10 @@ class Game:
     def start_page(self) -> None:
             os.system('cls' if os.name == 'nt' else 'clear')
             print("\n\nWelcome To BLACKJACK TERMINAL!\n\n")
-            login_create = input("Login to existing account or create new account? [L/C]")
-            if login_create.lower() == "l":
+            login_or_create = input("Login to existing account or create new account? [L/C]")
+            if login_or_create.lower() == "l":
                 self.login()
-            elif login_create.lower() == "c":
+            elif login_or_create.lower() == "c":
                 new_account = Create_Account()
                 new_account.create_account()
                 self.start_page()
@@ -103,6 +103,7 @@ class Game:
                 self.player.first_name = account['first_name']
                 self.player.last_name = account['last_name']
                 self.player.phone_number = account['phone_number']
+                self.player.balance = account['balance']
                 break
             else:
                 continue
@@ -119,10 +120,10 @@ class Game:
             self.login()
         else:
             print("Login Successful!")
-            self.player.logged_in = True
-            print(self.player.logged_in)
-            
-
+            time.sleep(.75)
+            self.menu()
+        
+    
     def decode(self, password) -> str:
         temp_pass = ""
         for letter in password:
@@ -132,22 +133,119 @@ class Game:
                 temp_pass += letter
         password = temp_pass
         return password
+            
+    
+    def menu(self) -> None:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print(f"Welcome Back {self.player.first_name}!")
+        print(f"\nYour balance is at the moment: {self.player.balance} SEK")
+        print("What would you like to do?")
+        menu_choice = input("Start playing / Quit / Deposit / Withdraw? [S/Q/D/W]: ")
+        if menu_choice.lower() == 'd':
+            self.deposit()
+        elif menu_choice.lower() == 'w':
+            self.withdraw()
+        elif menu_choice.lower() == 'q':
+            self.quit()
+        elif menu_choice.lower() == 's':
+            self.play()
+        else:
+            os.system('cls' if os.name == 'nt' else 'clear')
+            print("Input not reqognized!")
+            time.sleep(.7)
+            self.menu()
+            
+
+    def deposit(self) -> None:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print("NOT YET IMPLEMENTED!\n")
+        time.sleep(1)
+        print("Redirecting to MENU...")
+        time.sleep(1)
+        self.menu()
 
 
+    def withdraw(self) -> None:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print("NOT YET IMPLEMENTED!\n")
+        time.sleep(1)
+        print("Redirecting to MENU...")
+        time.sleep(1)
+        self.menu()
+
+
+    def quit(self) -> None:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        self.save()
+        print(f"\nSorry to see you go {self.player.first_name}\nSHUTTING DOWN...\n")
+        time.sleep(1)
+
+
+    def save(self) -> None:
+        with open ("game.json", "r") as open_file:
+            data = json.load(open_file)
+            open_file.close()
+        accounts = data['accounts']
+        for account in accounts:
+            if account['username'] == self.player.username:
+                account['balance'] = self.player.balance
+                break
+            else:
+                continue
+        write_file = open("game.json", "w+")
+        write_file.write(json.dumps(data, indent = 4, sort_keys = True))
+        write_file.close()
 
 
     def play(self) -> None:
-        if self.player.balance == None:
-            self.buy_in()
-            print("\n")
+        os.system('cls' if os.name == 'nt' else 'clear')
+        self.place_bet()
         for i in range(2):
-            self.player.draw_card() 
-        while(self.player.total < 21):
-            print(f"Your total is {self.player.total}")
-            if self.player.stayed == False:
-                self.player.choice()
-                break
-    
+            print("")
+            self.player.draw_card()
+        if self.player.hand[0].value == 1 or self.player.hand[1].value == 1:
+            pass
+        print(f"Your total is {self.player.total}\n")
+        self.player.choice()
+        if self.player.total == 21 and len(self.player.hand) == 2:
+            os.system('cls' if os.name == 'nt' else 'clear')
+            print(f"\nBLACKJACK!\nYou win {self.player.current_bet*2.5} SEK")
+            self.player.balance += self.player.current_bet*2.5
+        if self.player.stayed:
+            os.system('cls' if os.name == 'nt' else 'clear')
+            print(f"\nYour total is {self.player.total}\n")
+            print("Dealer wins!\n")
+            print(f"\nYour balance is now {self.player.balance} SEK")
+        elif self.player.total > 21:
+            os.system('cls' if os.name == 'nt' else 'clear')
+            print(f"\nYour total is {self.player.total}\n")
+            print("Dealer wins!\n")
+            print(f"\nYour balance is now {self.player.balance} SEK")
+        self.player.hand = []
+        self.player.current_bet = None
+        self.player.action = None
+        self.player.total = None
+        self.replay()
+
+
+    def replay(self) -> None:
+        again = input("Replay or go back to MENU: [R/M]")
+        if again.lower() == "r":
+            self.play()
+        elif again.lower() == "m":
+            self.menu()
+        else:
+            print("Input not reqognized!")
+            self.replay()
+
+
+    def place_bet(self) -> None:
+        print(f"Your current balance is: {self.player.balance} SEK")
+        requested_bet = float(input("Enter your amount to bet (SEK): "))
+        self.player.current_bet = requested_bet
+        print(f"\nYour bet is {self.player.current_bet} SEK\n")
+        self.player.balance -= self.player.current_bet
+
 
     def buy_in(self) -> None:
         requested_balance = float(input("Enter your wanted buy-in amount: "))
@@ -201,7 +299,6 @@ class Card:
         else:
             self.value = gen_face_value
         print(self.face_value + " of " + self.type)
-        print(self.value)
 
 
 
@@ -218,22 +315,26 @@ class Player:
         self.phone_number = None
         self.password = None
         self.logged_in = False
+        self.current_bet = None
 
 
     def draw_card(self) -> None:
-        self.new_card = Card()
-        self.new_card.generate_card()
-        self.hand.append(self.new_card)
-        self.total += self.new_card.value
+        new_card = Card()
+        new_card.generate_card()
+        self.hand.append(new_card)
+        if new_card.face_value == 1:
+            self.total += 11
+        else:
+            self.total += new_card.value
 
 
     def choice(self) -> None:
         self.action = input("Would you like to HIT or STAY? [H/S]")
-        if self.total < 21:
+        if self.total < 21 and self.stayed != True:
             if self.action.lower() == "h":
                 self.draw_card()
-                self.choice()
                 print(f"Your total is now {self.total}")
+                self.choice()
             elif self.action.lower() == "s":
                 self.stayed = True
             else:
