@@ -404,6 +404,15 @@ class Dealer:
         self.new_card = None
         self.ace_drawn = False
         self.drawn_cards = 0
+
+    
+    def dealer_play(self) -> None:
+        while self.total > 17:
+            self.dealer_draw()
+    
+
+    def dealer_draw(self) -> None:
+        pass
         
 if __name__ == "__main__":
     new_game = Game()
