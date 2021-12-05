@@ -177,7 +177,7 @@ class Game:
     def quit(self) -> None:
         os.system('cls' if os.name == 'nt' else 'clear')
         self.save()
-        print(f"\nSorry to see you go {self.player.first_name}\nSHUTTING DOWN...\n")
+        print(f"\nSorry to see you go {self.player.first_name}!\nSHUTTING DOWN...\n")
         time.sleep(1)
 
 
@@ -200,12 +200,17 @@ class Game:
     def play(self) -> None:
         os.system('cls' if os.name == 'nt' else 'clear')
         self.place_bet()
-        for i in range(2):
+        while self.player.drawn_cards < 2:
             print("")
             self.player.draw_card()
-        if self.player.hand[0].value == 1 or self.player.hand[1].value == 1:
-            pass
-        print(f"Your total is {self.player.total}\n")
+            self.player.drawn_cards += 1
+        print(f"\nYour total is {self.player.total}\n")
+        '''
+        if self.player.hand[0].value == self.player.hand[1].value:
+            self.player.balance -= self.player.current_bet
+            self.split()
+        else:
+        '''
         self.player.choice()
         if self.player.total == 21 and len(self.player.hand) == 2:
             os.system('cls' if os.name == 'nt' else 'clear')
@@ -224,12 +229,51 @@ class Game:
         self.player.hand = []
         self.player.current_bet = None
         self.player.action = None
-        self.player.total = None
+        self.player.total = 0
+        self.player.stayed = False
+        self.player.drawn_cards = 0
+        self.replay()
+
+
+    def split_play(self, player) -> None:
+        while player.drawn_cards < 2:
+            print("")
+            player.draw_card() 
+            player.drawn_cards +=1
+        print(f"\nYour total is {player.total}")
+        player.choice()
+        player.hand = []
+        player.current_bet = None
+        player.action = None
+        player.total = 0
+        player.stayed = False
+        player.drawn_cards = 0
+    
+
+    def split(self) -> None:
+        print(f"You have two cards with the value of {self.player.hand[0].value}")
+        split = input("Split? [Y/N]")
+        if split.lower() == 'y':
+            split_player = Player()
+            split_player.hand.append(self.player.hand[1])
+            split_player.drawn_cards = 1
+            self.player.hand.pop
+            self.player.drawn_cards = 1
+            print("\nHand one:")
+            self.split_play(self.player)
+            print("\nHand two:")
+            self.split_play(split_player)
+        elif split.lower() == 'n':
+            self.player.choice()
+        else:
+            print("Input not reqognized")
+            self.split()
         self.replay()
 
 
     def replay(self) -> None:
         again = input("Replay or go back to MENU: [R/M]")
+        self.save()
         if again.lower() == "r":
             self.play()
         elif again.lower() == "m":
@@ -264,9 +308,10 @@ class Game:
 
 class Card:
     def __init__(self) -> None:
-        self.type = None
-        self.value = None
-        self.face_value = None
+        self.type = ""
+        self.value = 0
+        self.ace_drawn = False
+        self.face_value = ""
         self.possible_types = {
             1: "clubs",
             2: "spades",
@@ -290,12 +335,18 @@ class Card:
             }
     
     def generate_card(self) -> None:
+        self.face_value = ''
+        self.value = 0
+        self.type = ''
         gen_type = random.randint(1,4)
         gen_face_value = random.randint(1,13)
         self.type = self.possible_types[gen_type]
         self.face_value = self.possible_face_values[gen_face_value]
-        if gen_face_value >= 10:
-            self.value = 10
+        if gen_face_value == 1:
+            self.ace_drawn = True
+            self.value = gen_face_value
+        elif gen_face_value >= 10:
+            self.value += 10
         else:
             self.value = gen_face_value
         print(self.face_value + " of " + self.type)
@@ -316,21 +367,23 @@ class Player:
         self.password = None
         self.logged_in = False
         self.current_bet = None
+        self.new_card = None
+        self.drawn_cards = 0
 
 
     def draw_card(self) -> None:
-        new_card = Card()
-        new_card.generate_card()
-        self.hand.append(new_card)
-        if new_card.face_value == 1:
+        self.new_card = Card()
+        self.new_card.generate_card()
+        self.hand.append(self.new_card)
+        if self.new_card.ace_drawn == True and self.total <= 10:
             self.total += 11
         else:
-            self.total += new_card.value
+            self.total += self.new_card.value  
 
 
     def choice(self) -> None:
         self.action = input("Would you like to HIT or STAY? [H/S]")
-        if self.total < 21 and self.stayed != True:
+        if self.total < 21 or self.stayed != True:
             if self.action.lower() == "h":
                 self.draw_card()
                 print(f"Your total is now {self.total}")
@@ -344,6 +397,13 @@ class Player:
             print(f"Your total is {self.total}")
 
 
+class Dealer:
+    def __init__(self) -> None:
+        self.hand = []
+        self.total = 0
+        self.new_card = None
+        self.ace_drawn = False
+        self.drawn_cards = 0
         
 if __name__ == "__main__":
     new_game = Game()
