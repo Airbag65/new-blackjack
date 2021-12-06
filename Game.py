@@ -199,40 +199,78 @@ class Game:
 
     def play(self) -> None:
         os.system('cls' if os.name == 'nt' else 'clear')
-        self.place_bet()
-        while self.player.drawn_cards < 2:
-            print("")
-            self.player.draw_card()
-            self.player.drawn_cards += 1
-        print(f"\nYour total is {self.player.total}\n")
-        '''
-        if self.player.hand[0].value == self.player.hand[1].value:
-            self.player.balance -= self.player.current_bet
-            self.split()
+        if self.player.balance > 0:
+            self.place_bet()
+            self.dealer = Dealer()
+            self.dealer.dealer_draw()
+            while self.player.drawn_cards < 2:
+                print("")
+                self.player.draw_card()
+                print(f"{self.player.new_card.face_value} of {self.player.new_card.type}")
+                self.player.drawn_cards += 1
+            print(f"\n\nYour total is {self.player.total}\n\n")
+            print(f"Dealer has: {self.dealer.first_card.face_value} of {self.dealer.first_card.type}\n")
+            '''
+            if self.player.hand[0].value == self.player.hand[1].value:
+                self.player.balance -= self.player.current_bet
+                self.split()
+            else:
+            '''
+            if self.player.total < 21:
+                self.player.choice()
+            # * BLACKJACK
+            if self.player.total == 21 and len(self.player.hand) == 2:
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print(f"Dealer's Cards:\n{self.dealer.first_card.face_value} of {self.dealer.first_card.type}")
+                self.dealer.dealer_play()
+                if self.dealer.dealer_bj != True:
+                    print(f"\nBLACKJACK!\nYou win {self.player.current_bet*2.5} SEK")
+                    self.player.balance += self.player.current_bet*2.5
+                else:
+                    print (f"\nBoth you and the dealer have BLACKJACK!\nYou tied with the dealer!\nYou win {self.player.current_bet} SEK")
+                    self.player.balance += self.player.current_bet
+                    print(f"\nYour current balance now is: {self.player.balance} SEK")
+            # * REST OF CASES
+            if self.player.stayed:
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print(f"Dealer's Cards:\n{self.dealer.first_card.face_value} of {self.dealer.first_card.type}")
+                self.dealer.dealer_play()
+                print(f"\nYour total is {self.player.total}\n")
+                if self.dealer.total > 21:
+                    print(f"\nDealer has {self.dealer.total}! Dealer BUSTS!\nYou win {self.player.current_bet*2} SEK")
+                    self.player.balance += self.player.current_bet*2
+                    print(f"\nYour current balance now is: {self.player.balance} SEK")
+                else:
+                    if self.player.total == self.dealer.total:
+                        print(f"Dealer's total is {self.dealer.total}\nPUSH!\nYou win {self.player.current_bet} SEK")
+                        self.player.balance += self.player.current_bet
+                        print(f"\nYour current balance now is: {self.player.balance} SEK")
+                    elif self.player.total < self.dealer.total:
+                        print(f"Dealer's total is {self.dealer.total}\nYou Lose!")
+                        print(f"\nYour current balance now is: {self.player.balance} SEK")
+                    elif self.player.total > self.dealer.total:
+                        print(f"Dealer's total is {self.dealer.total}\nYou WIN {self.player.current_bet*2} SEK")
+                        self.player.balance += self.player.current_bet*2
+                        print(f"\nYour current balance now is: {self.player.balance} SEK")
+            # * BUST
+            elif self.player.total > 21:
+                os.system('cls' if os.name == 'nt' else 'clear')
+                print(f"Dealer's Cards:\n{self.dealer.first_card.face_value} of {self.dealer.first_card.type}")
+                self.dealer.dealer_play()
+                print(f"\nYour total is {self.player.total}\nBUST!\n")
+                print(f"\nYour balance is now {self.player.balance} SEK")
+            self.player.hand = []
+            self.player.current_bet = None
+            self.player.action = None
+            self.player.total = 0
+            self.player.stayed = False
+            self.dealer = None
+            self.player.drawn_cards = 0
+            self.replay()
         else:
-        '''
-        self.player.choice()
-        if self.player.total == 21 and len(self.player.hand) == 2:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            print(f"\nBLACKJACK!\nYou win {self.player.current_bet*2.5} SEK")
-            self.player.balance += self.player.current_bet*2.5
-        if self.player.stayed:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            print(f"\nYour total is {self.player.total}\n")
-            print("Dealer wins!\n")
-            print(f"\nYour balance is now {self.player.balance} SEK")
-        elif self.player.total > 21:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            print(f"\nYour total is {self.player.total}\n")
-            print("Dealer wins!\n")
-            print(f"\nYour balance is now {self.player.balance} SEK")
-        self.player.hand = []
-        self.player.current_bet = None
-        self.player.action = None
-        self.player.total = 0
-        self.player.stayed = False
-        self.player.drawn_cards = 0
-        self.replay()
+            print("Your balance is too low!\nPlease top up your balance and try again")
+            time.sleep(1.25)
+            self.menu()
 
 
     def split_play(self, player) -> None:
@@ -272,7 +310,7 @@ class Game:
 
 
     def replay(self) -> None:
-        again = input("Replay or go back to MENU: [R/M]")
+        again = input("Replay or go back to MENU [R/M]: ")
         self.save()
         if again.lower() == "r":
             self.play()
@@ -286,9 +324,15 @@ class Game:
     def place_bet(self) -> None:
         print(f"Your current balance is: {self.player.balance} SEK")
         requested_bet = float(input("Enter your amount to bet (SEK): "))
-        self.player.current_bet = requested_bet
-        print(f"\nYour bet is {self.player.current_bet} SEK\n")
-        self.player.balance -= self.player.current_bet
+        if requested_bet > self.player.balance:
+            print("Your balance is too low for that bet!\nTry a different amount!")
+            time.sleep(1)
+            os.system('cls' if os.name == 'nt' else 'clear')
+            self.place_bet()
+        else:
+            self.player.current_bet = requested_bet
+            print(f"\nYour bet is {self.player.current_bet} SEK\n")
+            self.player.balance -= self.player.current_bet
 
 
     def buy_in(self) -> None:
@@ -349,7 +393,6 @@ class Card:
             self.value += 10
         else:
             self.value = gen_face_value
-        print(self.face_value + " of " + self.type)
 
 
 
@@ -382,11 +425,13 @@ class Player:
 
 
     def choice(self) -> None:
-        self.action = input("Would you like to HIT or STAY? [H/S]")
-        if self.total < 21 or self.stayed != True:
+        if self.total < 21 and self.stayed == False:
+            self.action = input("Would you like to HIT or STAY? [H/S]")
             if self.action.lower() == "h":
                 self.draw_card()
-                print(f"Your total is now {self.total}")
+                print(f"{self.new_card.face_value} of {self.new_card.type}")
+                print(f"\nYour total is now {self.total}")
+                time.sleep(1)
                 self.choice()
             elif self.action.lower() == "s":
                 self.stayed = True
@@ -400,19 +445,34 @@ class Player:
 class Dealer:
     def __init__(self) -> None:
         self.hand = []
+        self.first_card = None
         self.total = 0
         self.new_card = None
-        self.ace_drawn = False
+        self.dealer_bj = False
         self.drawn_cards = 0
 
     
     def dealer_play(self) -> None:
-        while self.total > 17:
+        while self.total < 17:
             self.dealer_draw()
+            print(f"{self.new_card.face_value} of {self.new_card.type}")
+        if self.total == 21 and self.drawn_cards < 3:
+            self.dealer_bj = True
     
 
     def dealer_draw(self) -> None:
-        pass
+        self.new_card = Card()
+        self.new_card.generate_card()
+        self.hand.append(self.new_card)
+        if self.drawn_cards < 1:
+            self.first_card = self.new_card
+        self.drawn_cards += 1
+        if self.new_card.ace_drawn == True and self.total <= 10:
+            self.total += 11
+        else:
+            self.total += self.new_card.value
+        
+        
         
 if __name__ == "__main__":
     new_game = Game()
