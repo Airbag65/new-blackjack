@@ -158,7 +158,12 @@ class Game:
 
     def deposit(self) -> None:
         os.system('cls' if os.name == 'nt' else 'clear')
-        print("NOT YET IMPLEMENTED!\n")
+        requested_deposit = float(input("Enter the amount you wish to deposit(SEK): "))
+        self.player.balance += requested_deposit
+        self.save()
+        print("Loading...")
+        time.sleep(1)
+        print(f"{requested_deposit} SEK has been added to your account!")
         time.sleep(1)
         print("Redirecting to MENU...")
         time.sleep(1)
@@ -210,12 +215,6 @@ class Game:
                 self.player.drawn_cards += 1
             print(f"\n\nYour total is {self.player.total}\n\n")
             print(f"Dealer has: {self.dealer.first_card.face_value} of {self.dealer.first_card.type}\n")
-            '''
-            if self.player.hand[0].value == self.player.hand[1].value:
-                self.player.balance -= self.player.current_bet
-                self.split()
-            else:
-            '''
             if self.player.total < 21:
                 self.player.choice()
             # * BLACKJACK
@@ -432,7 +431,10 @@ class Player:
                 print(f"{self.new_card.face_value} of {self.new_card.type}")
                 print(f"\nYour total is now {self.total}")
                 time.sleep(1)
-                self.choice()
+                if self.total == 21:
+                    self.stayed = True
+                else:
+                    self.choice()
             elif self.action.lower() == "s":
                 self.stayed = True
             else:
